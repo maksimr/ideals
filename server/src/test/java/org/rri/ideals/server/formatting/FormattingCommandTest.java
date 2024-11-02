@@ -172,7 +172,7 @@ public class FormattingCommandTest extends LspLightBasePlatformTestCase {
                                                                @Nullable Range lspRange) {
     final var actualPsiFile = myFixture.configureByText(fileType, actualText);
 
-    var context = new ExecutorContext(actualPsiFile, getProject(), new TestUtil.DumbCancelChecker());
+    var context = new ExecutorContext(actualPsiFile, myFixture.getEditor(), new TestUtil.DumbCancelChecker());
     var command = new FormattingCommand(lspRange, FormattingTestUtil.defaultOptions());
 
     return TextUtil.differenceAfterAction(actualPsiFile, (copy) -> {

@@ -20,6 +20,11 @@ public class FormattingTest extends LspServerTestBase {
     return "formatting/formatting-project";
   }
 
+  @Override
+  protected String getSourceRoot() {
+    return "";
+  }
+
   @Test
   public void wholeFileFormatting() {
     final var expected = Set.of(
@@ -32,6 +37,7 @@ public class FormattingTest extends LspServerTestBase {
     var params = new DocumentFormattingParams();
     params.setTextDocument(TestUtil.getDocumentIdentifier(filePath));
     params.setOptions(FormattingTestUtil.defaultOptions());
+    createEditor(LspPath.fromLspUri(params.getTextDocument().getUri()));
 
     checkFormattingResult(expected, server().getTextDocumentService().formatting(params));
   }
@@ -48,6 +54,7 @@ public class FormattingTest extends LspServerTestBase {
     params.setTextDocument(TestUtil.getDocumentIdentifier(filePath));
     params.setOptions(FormattingTestUtil.defaultOptions());
     params.setRange(new Range(new Position(0, 0), new Position(2, 0)));
+    createEditor(LspPath.fromLspUri(params.getTextDocument().getUri()));
 
     checkFormattingResult(expected, server().getTextDocumentService().rangeFormatting(params));
   }
@@ -64,6 +71,7 @@ public class FormattingTest extends LspServerTestBase {
     params.setOptions(FormattingTestUtil.defaultOptions());
     params.setCh(":");
     params.setPosition(new Position(0, 10));
+    createEditor(LspPath.fromLspUri(params.getTextDocument().getUri()));
 
     checkFormattingResult(expected, server().getTextDocumentService().onTypeFormatting(params));
   }

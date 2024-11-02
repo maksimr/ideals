@@ -2,7 +2,9 @@ package org.rri.ideals.server.signature;
 
 import com.intellij.codeInsight.hint.ParameterInfoListener;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.Disposer;
 import com.jetbrains.python.PythonFileType;
 import org.eclipse.lsp4j.ParameterInformation;
 import org.eclipse.lsp4j.Position;
@@ -15,8 +17,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.rri.ideals.server.LspLightBasePlatformTestCase;
-import org.rri.ideals.server.LspPath;
 import org.rri.ideals.server.TestUtil;
+import org.rri.ideals.server.commands.ExecutorContext;
 
 import java.util.List;
 
@@ -76,7 +78,7 @@ public class SignatureHelpServiceTest extends LspLightBasePlatformTestCase {
     final var text = """
         def foo(x: int, y: int):
             return x + y
-        
+                
         foo(1, )
         """;
     var expected =
@@ -196,12 +198,13 @@ public class SignatureHelpServiceTest extends LspLightBasePlatformTestCase {
                                  @NotNull CancelChecker cancelChecker,
                                  @NotNull List<SignatureInformation> expected) {
     final var file = myFixture.configureByText(fileType, text);
-    var signatureHelpService = getProject().getService(SignatureHelpService.class);
+    final var signatureHelpService = getProject().getService(SignatureHelpService.class);
     signatureHelpService.setEdtFlushRunnable(defaultFlushRunnable());
+    final var disposable = Disposer.newDisposable();
 
+    myFixture.getEditor().getCaretModel().moveToLogicalPosition(new LogicalPosition(pos.getLine(), pos.getCharacter()));
     var signatureHelp =
-        signatureHelpService.computeSignatureHelp(
-            LspPath.fromVirtualFile(file.getVirtualFile()), pos, cancelChecker);
+        signatureHelpService.computeSignatureHelp(new ExecutorContext(file, myFixture.getEditor(), cancelChecker));
     assertNotNull(signatureHelp);
     assertEquals(activeSignature, signatureHelp.getActiveSignature());
     assertEquals(expected, signatureHelp.getSignatures());
@@ -215,7 +218,7 @@ public class SignatureHelpServiceTest extends LspLightBasePlatformTestCase {
         label,
         (String) null,
         parameterInformationList
-        );
+    );
     ans.setActiveParameter(activeParameter);
     return ans;
   }

@@ -1,6 +1,7 @@
 package org.rri.ideals.server.symbol;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiManager;
 import org.eclipse.lsp4j.DocumentSymbol;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.SymbolKind;
@@ -11,7 +12,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.rri.ideals.server.LspLightBasePlatformTestCase;
-import org.rri.ideals.server.LspPath;
+import org.rri.ideals.server.TestUtil;
+import org.rri.ideals.server.commands.ExecutorContext;
 
 import java.lang.String;
 import java.nio.file.Paths;
@@ -114,7 +116,7 @@ public class DocumentSymbolServiceTest extends LspLightBasePlatformTestCase {
         newRange(12, 8, 12, 20),
         newRange(12, 13, 12, 13));
     final var docSymVarX = documentSymbol("x", Field,
-        newRange(11,  8, 11, 14),
+        newRange(11, 8, 11, 14),
         newRange(11, 13, 11, 13));
 
     final var docSymClass = documentSymbol("Document_symbol(cls2.Class2)", Class,
@@ -192,7 +194,7 @@ public class DocumentSymbolServiceTest extends LspLightBasePlatformTestCase {
         newRange(28, 4, 28, 4));
 
     final var docSymFile = documentSymbol("DocumentSymbol.kt", File,
-        newRange(0, 0, 29, 0  ),
+        newRange(0, 0, 29, 0),
         newRange(0, 0, 0, 0),
         arrayList(enumLetters, interInterface, annotationClassForTest, docSymClass, funcBuz));
 
@@ -202,9 +204,14 @@ public class DocumentSymbolServiceTest extends LspLightBasePlatformTestCase {
 
   private void checkDocumentSymbols(@NotNull List<@NotNull DocumentSymbol> answers, @Nullable VirtualFile virtualFile) {
     assertNotNull(virtualFile);
-    var service = getProject().getService(DocumentSymbolService.class);
-    var actual = service.computeDocumentSymbols(LspPath.fromVirtualFile(virtualFile), () -> {
-    }).stream().map(Either::getRight).toList();
+    final var service = getProject().getService(DocumentSymbolService.class);
+    final var psiFile = PsiManager.getInstance(getProject()).findFile(virtualFile);
+    assertNotNull(psiFile);
+    myFixture.openFileInEditor(virtualFile);
+
+    var actual = service.computeDocumentSymbols(
+            new ExecutorContext(psiFile, myFixture.getEditor(), new TestUtil.DumbCancelChecker()))
+        .stream().map(Either::getRight).toList();
     assertEquals(answers, actual);
   }
 

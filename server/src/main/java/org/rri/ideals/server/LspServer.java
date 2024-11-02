@@ -1,12 +1,16 @@
 package org.rri.ideals.server;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManagerListener;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.eclipse.lsp4j.*;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
@@ -15,6 +19,7 @@ import org.eclipse.lsp4j.services.LanguageClientAware;
 import org.eclipse.lsp4j.services.LanguageServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.rri.ideals.server.diagnostics.DiagnosticsListener;
 import org.rri.ideals.server.util.Metrics;
 import org.rri.ideals.server.util.MiscUtil;
 
@@ -31,6 +36,8 @@ public class LspServer implements LanguageServer, LanguageClientAware, LspSessio
 
   @NotNull
   private final MessageBusConnection messageBusConnection;
+  @NotNull
+  private final Disposable disposable;
   @Nullable
   private MyLanguageClient client = null;
 
@@ -38,6 +45,7 @@ public class LspServer implements LanguageServer, LanguageClientAware, LspSessio
   private Project project = null;
 
   public LspServer() {
+    disposable = Disposer.newDisposable();
     messageBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
     messageBusConnection.subscribe(ProgressManagerListener.TOPIC, new WorkDoneProgressReporter());
   }
@@ -48,8 +56,8 @@ public class LspServer implements LanguageServer, LanguageClientAware, LspSessio
     return CompletableFuture.supplyAsync(() -> {
       final var workspaceFolders = params.getWorkspaceFolders();
       var oldProject = project;
-      if(oldProject != null) {
-        if(oldProject.isOpen()) {
+      if (oldProject != null) {
+        if (oldProject.isOpen()) {
           LOG.info("Closing old project: " + oldProject);
           ProjectService.getInstance().closeProject(oldProject);
         }
@@ -71,6 +79,8 @@ public class LspServer implements LanguageServer, LanguageClientAware, LspSessio
         assert client != null;
         LspContext.createContext(project, client, params.getCapabilities());
         project.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, this);
+        final var listener = new DiagnosticsListener(project);
+        Disposer.register(disposable, listener);
 
         LOG.info("LSP was initialized. Project: " + project);
       });
@@ -162,6 +172,13 @@ public class LspServer implements LanguageServer, LanguageClientAware, LspSessio
     messageBusConnection.disconnect();
 
     if (project != null) {
+      Disposer.dispose(disposable);
+      final var editorManager = FileEditorManager.getInstance(project);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        for (VirtualFile openFile : editorManager.getOpenFiles()) {
+          editorManager.closeFile(openFile);
+        }
+      });
       ProjectService.getInstance().closeProject(project);
       this.project = null;
     }
@@ -207,18 +224,17 @@ public class LspServer implements LanguageServer, LanguageClientAware, LspSessio
   public void exitDumbMode() {
     LOG.info("Exited dumb mode. Refreshing diagnostics...");
     getClient().notifyIndexFinished();
-    getTextDocumentService().refreshDiagnostics();
   }
 
   private class WorkDoneProgressReporter implements ProgressManagerListener {
     @Override
     public void afterTaskStart(@NotNull Task task, @NotNull ProgressIndicator indicator) {
-      if(task.getProject() == null || !task.getProject().equals(project))
+      if (task.getProject() == null || !task.getProject().equals(project))
         return;
 
       var client = LspServer.this.client;
 
-      if(client == null)
+      if (client == null)
         return;
 
       final String token = calculateUniqueToken(task);
@@ -239,12 +255,12 @@ public class LspServer implements LanguageServer, LanguageClientAware, LspSessio
 
     @Override
     public void afterTaskFinished(@NotNull Task task) {
-      if(task.getProject() != null && !task.getProject().equals(project))
+      if (task.getProject() != null && !task.getProject().equals(project))
         return;
 
       var client = LspServer.this.client;
 
-      if(client == null)
+      if (client == null)
         return;
 
       final String token = calculateUniqueToken(task);
