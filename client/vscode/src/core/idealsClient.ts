@@ -1,12 +1,10 @@
 import * as vscode from "vscode";
-import * as net from 'net';
-
-import {integer, LanguageClientOptions, RevealOutputChannelOn,} from "vscode-languageclient";
-
-import {LanguageClient, ServerOptions, State, StreamInfo,} from "vscode-languageclient/node";
-import path = require("path");
-import fs = require("fs");
-import os = require('node:os');
+import * as net from 'node:net';
+import * as path from "node:path";
+import * as fs from "node:fs";
+import * as os from 'node:os';
+import { integer, LanguageClientOptions, RevealOutputChannelOn, } from "vscode-languageclient";
+import { LanguageClient, ServerOptions, State, StreamInfo, } from "vscode-languageclient/node";
 
 const outputChannel = vscode.window.createOutputChannel("IdeaLS Client");
 
@@ -54,7 +52,7 @@ export class IdealsClient {
       this.languageClient.start().then(() => {
         if (pathToVmoptions) {
           fs.unlink(path.normalize(pathToVmoptions), (err) => {
-            if (err) throw err;
+            if (err) { throw err; }
           });
         }
         disposeDidChange.dispose();
@@ -66,10 +64,10 @@ export class IdealsClient {
   }
 
   //Create a command to be run to start the LS java process.
-  getIdealsInitOptions() : IdealsInitOptions {
+  getIdealsInitOptions(): IdealsInitOptions {
     let configuredTransport: String =
       vscode.workspace.getConfiguration('ideals').get('startup.transport') || process.env.IDEALS_TRANSPORT || "STDIO";
-  if (configuredTransport.toUpperCase() === "TCP") {
+    if (configuredTransport.toUpperCase() === "TCP") {
       // Connect to language server via socket
       let configuredPort: String | integer = vscode.workspace.getConfiguration('ideals').get('startup.port') || process.env.IDEALS_TCP_PORT || 8989;
 
@@ -77,7 +75,7 @@ export class IdealsClient {
         port: +configuredPort
       };
 
-      return new IdealsInitOptions( () => {
+      return new IdealsInitOptions(() => {
         try {
           let socket = net.connect(connectionInfo);
           let result: StreamInfo = {
@@ -108,7 +106,7 @@ export class IdealsClient {
     if (!fs.existsSync(vmoptionsPath)) {
       vmoptionsPath = ideaExecutablePath + ".vmoptions";
     }
-    var content : string = "";
+    var content: string = "";
     if (fs.existsSync(vmoptionsPath)) {
       content = fs.readFileSync(vmoptionsPath).toString();
     }
@@ -116,7 +114,7 @@ export class IdealsClient {
 
     const tmpdir = os.tmpdir();
     const pathToTempVmoptionsFile =
-        path.join(tmpdir, String(process.pid) + Math.random().toString().substring(2, 8) + ".vmoptions");
+      path.join(tmpdir, String(process.pid) + Math.random().toString().substring(2, 8) + ".vmoptions");
     fs.writeFileSync(pathToTempVmoptionsFile, content);
 
     let serverOptions: ServerOptions = {
@@ -148,9 +146,9 @@ export class IdealsClient {
 export const lspClient = new IdealsClient();
 
 export class IdealsInitOptions {
-  private readonly _serverOptions : ServerOptions;
-  private _pathToVmoptions ?: string;
-  constructor(newServerOptions : ServerOptions) {
+  private readonly _serverOptions: ServerOptions;
+  private _pathToVmoptions?: string;
+  constructor(newServerOptions: ServerOptions) {
     this._serverOptions = newServerOptions;
   }
 

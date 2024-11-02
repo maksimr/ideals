@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
 import * as jszip from 'jszip';
-import {split, trim} from './Jar';
+import { split, trim } from './Jar';
 
 export default class JarDocument implements vscode.CustomDocument {
 	private static allDocuments = new Map<string, JarDocument>();
-	
+
 	private constructor(
 		readonly uri: vscode.Uri,
-		private zipData: jszip)
-	{
+		private zipData: jszip
+	) {
 		JarDocument.allDocuments.set(uri.path, this);
 	}
 
@@ -16,7 +16,7 @@ export default class JarDocument implements vscode.CustomDocument {
 		return JarDocument.allDocuments.get(uri.path) ?? JarDocument.create(uri);
 	}
 
-	static async readContent(uri: vscode.Uri): Promise<string|undefined> {
+	static async readContent(uri: vscode.Uri): Promise<string | undefined> {
 		const jarSegments = split(uri.path);
 		const jarDocument = await JarDocument.getInstance(vscode.Uri.parse(jarSegments.base));
 		return jarDocument?.readFileContent(jarSegments.path);
@@ -46,7 +46,7 @@ export default class JarDocument implements vscode.CustomDocument {
 		return new JarDocument(uri, zipData);
 	}
 
-	async readFileContent(path: string): Promise<string|undefined> {
+	async readFileContent(path: string): Promise<string | undefined> {
 		const zipObject = this.zipData.file(path.substring(1)); // remove the leading '/'
 		return zipObject?.async('text');
 	}

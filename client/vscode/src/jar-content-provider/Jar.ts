@@ -31,7 +31,7 @@ export function split(jarPath: string): JarTuple {
  * @returns path not containing leading '/'
  */
 export function trim(path: string): string {
-    const regex = `^${PATH_SEPARATOR}*(.*)`;
+	const regex = `^${PATH_SEPARATOR}*(.*)`;
 	const [_, result] = new RegExp(regex).exec(path) ?? [];
 	return result;
 }
