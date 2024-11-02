@@ -1,3 +1,7 @@
+[![Server tests](https://github.com/maksimr/ideals/actions/workflows/server-tests.yaml/badge.svg)](https://github.com/maksimr/ideals/actions/workflows/server-tests.yaml)
+[![VSCode extension tests](https://github.com/maksimr/ideals/actions/workflows/vscode-tests.yaml/badge.svg)](https://github.com/maksimr/ideals/actions/workflows/vscode-tests.yaml)
+[![Release](https://github.com/maksimr/ideals/actions/workflows/release.yaml/badge.svg)](https://github.com/maksimr/ideals/actions/workflows/release.yaml)
+
 <a name="readme-top"></a>
 
 <details>
