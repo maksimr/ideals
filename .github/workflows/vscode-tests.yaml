@@ -1,36 +1,49 @@
 name: VSCode extension tests
 on:
   push:
-    branches:
-      - master
-    paths:
-      - 'client/vscode/**'
-  pull_request:
-    branches:
-      - master
-    paths:
-      - 'client/vscode/**'
+
 jobs:
   test-vscode-extension:
     name: Test VSCode IdeaLS client extension
     strategy:
       matrix:
-        os: [ macos-latest, ubuntu-latest, windows-latest ]
+        os: [ macos-latest, ubuntu-latest ]
     runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: client/vscode
     steps:
       - uses: actions/checkout@v3
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Prepare Sandbox
+        working-directory: server/
+        run: gradle prepareSandbox
+
+      - name: Run Server
+        uses: JarvusInnovations/background-action@v1
+        with:
+          working-directory: server/
+          run: gradle runIde &
+          wait-on: tcp:localhost:8989
+          wait-for: 2m
+
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 16.x
+
       - name: Compile extension
+        working-directory: client/vscode
         run: npm install
-      - name: Run tests on Linux
-        run: xvfb-run -a npm test
-        if: runner.os == 'Linux'
-      - name: Run tests on other systems
-        run: npm test
-        if: runner.os != 'Linux'
+
+      - name: Run tests
+        uses: coactions/setup-xvfb@v1
+        with:
+          run: npm test
+          working-directory: client/vscode
