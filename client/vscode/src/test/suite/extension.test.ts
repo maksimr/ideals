@@ -1,15 +1,38 @@
-import * as assert from 'assert';
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
 import * as vscode from 'vscode';
-// import * as myExtension from '../../extension';
+import { IdealsClient } from '../../core/idealsClient';
+import { State } from 'vscode-languageclient';
 
 suite('Extension Test Suite', () => {
-	vscode.window.showInformationMessage('Start all tests.');
+	const timeout = 60 * 1000;
 
-	test('Sample test', () => {
-		assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
-	});
+	test('should start lsp', async () => {
+		await waitUntil(() => {
+			const lspClient: IdealsClient = getExtension()?.exports.lspClient;
+			return lspClient?.state === State.Running;
+		}, timeout, `lsp failed to start within ${timeout}ms`);
+	}).timeout(timeout);
+
+	function getExtension() {
+		return vscode.extensions.getExtension(getExtensionId());
+	}
+
+	function getExtensionId() {
+		return 'SuduIDE.ideals-vscode';
+	}
+
+	function waitUntil(predicate: () => boolean, timeout: number = 60 * 1000, message = 'Timeout') {
+		return new Promise((resolve, reject) => {
+			const timer = setInterval(() => {
+				if (predicate()) {
+					clearInterval(timer);
+					resolve(true);
+				}
+			}, 10);
+
+			setTimeout(() => {
+				clearInterval(timer);
+				reject(new Error(message));
+			}, timeout);
+		});
+	}
 });

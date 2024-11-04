@@ -16,6 +16,10 @@ export class IdealsClient {
     this.context = context;
   }
 
+  get state(): State {
+    return this.languageClient?.state ?? State.Stopped;
+  }
+
   async init(): Promise<void> {
     try {
       //Server options. LS client will use these options to start the LS.
