@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-export const waitUntil = async (predicate: () => boolean, timeout = 10000, message: string = "Timeout") => {
+export const waitUntil = async (predicate: () => boolean, timeout = 10000, message: string = 'Timeout') => {
   const pollInterval = 10;
 
   return new Promise((resolve, reject) => {

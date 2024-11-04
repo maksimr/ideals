@@ -1,12 +1,12 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 import * as net from 'node:net';
-import * as path from "node:path";
-import * as fs from "node:fs";
+import * as path from 'node:path';
+import * as fs from 'node:fs';
 import * as os from 'node:os';
-import { integer, LanguageClientOptions, RevealOutputChannelOn, } from "vscode-languageclient";
-import { LanguageClient, ServerOptions, State, StreamInfo, } from "vscode-languageclient/node";
+import { integer, LanguageClientOptions, RevealOutputChannelOn, } from 'vscode-languageclient';
+import { LanguageClient, ServerOptions, State, StreamInfo, } from 'vscode-languageclient/node';
 
-const outputChannel = vscode.window.createOutputChannel("IdeaLS Client");
+const outputChannel = vscode.window.createOutputChannel('IdeaLS Client');
 
 export class IdealsClient {
   private languageClient?: LanguageClient;
@@ -25,10 +25,10 @@ export class IdealsClient {
       //Server options. LS client will use these options to start the LS.
       let ideaLSInitOptions = this.getIdealsInitOptions();
       //creating the language client.
-      let clientId = "ideals-client";
-      let clientName = "IdeaLS Client";
+      let clientId = 'ideals-client';
+      let clientName = 'IdeaLS Client';
       let clientOptions: LanguageClientOptions = {
-        documentSelector: [{ pattern: "**/*" /* scheme: "file", language: "java" */ }],
+        documentSelector: [{ pattern: '**/*' /* scheme: "file", language: "java" */ }],
         outputChannel: outputChannel,
         revealOutputChannelOn: RevealOutputChannelOn.Never,
       };
@@ -43,11 +43,11 @@ export class IdealsClient {
         (stateChangeEvent) => {
           if (stateChangeEvent.newState === State.Stopped) {
             vscode.window.showErrorMessage(
-              "Failed to initialize the extension"
+              'Failed to initialize the extension'
             );
           } else if (stateChangeEvent.newState === State.Running) {
             vscode.window.showInformationMessage(
-              "Extension initialized successfully!"
+              'Extension initialized successfully!'
             );
           }
         }
@@ -63,15 +63,15 @@ export class IdealsClient {
       });
 
     } catch (exception) {
-      return Promise.reject("Extension error: " + exception);
+      return Promise.reject('Extension error: ' + exception);
     }
   }
 
   //Create a command to be run to start the LS java process.
   getIdealsInitOptions(): IdealsInitOptions {
     let configuredTransport: String =
-      vscode.workspace.getConfiguration('ideals').get('startup.transport') || process.env.IDEALS_TRANSPORT || "STDIO";
-    if (configuredTransport.toUpperCase() === "TCP") {
+      vscode.workspace.getConfiguration('ideals').get('startup.transport') || process.env.IDEALS_TRANSPORT || 'STDIO';
+    if (configuredTransport.toUpperCase() === 'TCP') {
       // Connect to language server via socket
       let configuredPort: String | integer = vscode.workspace.getConfiguration('ideals').get('startup.port') || process.env.IDEALS_TCP_PORT || 8989;
 
@@ -89,7 +89,7 @@ export class IdealsClient {
           return Promise.resolve(result);
 
         } catch (exception) {
-          console.log("failed to connect: " + exception);
+          console.log('failed to connect: ' + exception);
           throw exception;
         }
       });
@@ -99,31 +99,31 @@ export class IdealsClient {
       vscode.workspace.getConfiguration('ideals').get('startup.ideaExecutablePath') || process.env.IDEALS_IJ_PATH;
 
     if (!ideaExecutablePath) {
-      throw new Error("Path to IntelliJ IDEA executable must be specified in extension configuration or in environment variable IDEALS_IJ_PATH");
+      throw new Error('Path to IntelliJ IDEA executable must be specified in extension configuration or in environment variable IDEALS_IJ_PATH');
     }
 
     const ideaVersionDir = path.normalize(path.dirname(path.dirname(ideaExecutablePath)));
     const ideaVersion = path.basename(ideaVersionDir);
     const dirWithVmOptions = path.dirname(ideaVersionDir);
-    let vmoptionsPath = path.join(dirWithVmOptions, path.basename(ideaVersion) + ".vmoptions");
+    let vmoptionsPath = path.join(dirWithVmOptions, path.basename(ideaVersion) + '.vmoptions');
 
     if (!fs.existsSync(vmoptionsPath)) {
-      vmoptionsPath = ideaExecutablePath + ".vmoptions";
+      vmoptionsPath = ideaExecutablePath + '.vmoptions';
     }
-    var content: string = "";
+    var content: string = '';
     if (fs.existsSync(vmoptionsPath)) {
       content = fs.readFileSync(vmoptionsPath).toString();
     }
-    content += "\n-Djava.awt.headless=true";
+    content += '\n-Djava.awt.headless=true';
 
     const tmpdir = os.tmpdir();
     const pathToTempVmoptionsFile =
-      path.join(tmpdir, String(process.pid) + Math.random().toString().substring(2, 8) + ".vmoptions");
+      path.join(tmpdir, String(process.pid) + Math.random().toString().substring(2, 8) + '.vmoptions');
     fs.writeFileSync(pathToTempVmoptionsFile, content);
 
     let serverOptions: ServerOptions = {
       command: ideaExecutablePath,
-      args: ["lsp-server"],
+      args: ['lsp-server'],
       options: {
         env: {
           /* we want to support our plugin in all IDEA based IDEs, so if a new IDE published,

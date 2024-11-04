@@ -1,5 +1,5 @@
-export const JAR_CONTENT_SCHEME = "jar";
-export const ZIP_CONTENT_SCHEME = "zip";
+export const JAR_CONTENT_SCHEME = 'jar';
+export const ZIP_CONTENT_SCHEME = 'zip';
 
 export const JAR_CONTENT_SEPARATOR = '!';
 
@@ -19,9 +19,9 @@ interface JarTuple {
  * @returns tuple containing the base and content file path
  */
 export function split(jarPath: string): JarTuple {
-	const regex = `(.*)${JAR_CONTENT_SEPARATOR}+(.*)`;
-	const [_, base, path] = new RegExp(regex).exec(jarPath) ?? [];
-	return base ? { base, path } : { base: jarPath, path: '' };
+  const regex = `(.*)${JAR_CONTENT_SEPARATOR}+(.*)`;
+  const [_, base, path] = new RegExp(regex).exec(jarPath) ?? [];
+  return base ? { base, path } : { base: jarPath, path: '' };
 }
 
 /**
@@ -31,7 +31,7 @@ export function split(jarPath: string): JarTuple {
  * @returns path not containing leading '/'
  */
 export function trim(path: string): string {
-	const regex = `^${PATH_SEPARATOR}*(.*)`;
-	const [_, result] = new RegExp(regex).exec(path) ?? [];
-	return result;
+  const regex = `^${PATH_SEPARATOR}*(.*)`;
+  const [_, result] = new RegExp(regex).exec(path) ?? [];
+  return result;
 }
