@@ -145,9 +145,12 @@ export class IdealsClient {
     ans.pathToVmoptions = pathToTempVmoptionsFile;
     return ans;
   }
-}
 
-export const lspClient = new IdealsClient();
+  dispose() {
+    this.languageClient?.stop();
+    this.languageClient = undefined;
+  }
+}
 
 export class IdealsInitOptions {
   private readonly _serverOptions: ServerOptions;

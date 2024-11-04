@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { JAR_CONTENT_SCHEME, ZIP_CONTENT_SCHEME } from './jar-content-provider/Jar';
 import JarDocumentContentProvider from './jar-content-provider/JarDocumentContentProvider';
 
-import { lspClient } from './core/idealsClient';
+import { IdealsClient } from './core/idealsClient';
 
 export function activate(context: vscode.ExtensionContext) {
 	const provider = new JarDocumentContentProvider(context);
@@ -12,15 +12,15 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(jarRegistration);
 	context.subscriptions.push(zipRegistration);
 
-	//Set the context of the extension instance
+	const lspClient = new IdealsClient();
+
 	lspClient.setContext(context);
-	//Initialize the LS Client extension instance.
 	lspClient.init().catch((error) => {
 		console.log("Failed to activate RRI IdeaLS extension. " + (error));
 	});
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
+	context.subscriptions.push(lspClient);
+
 	console.log('Congratulations, your extension "rri.ideals" is now active!');
 
 	return {
